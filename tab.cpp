@@ -1,11 +1,12 @@
 #include "tab.h"
 #include<QThread>
+#include<QFile>
 Tab::Tab(QWidget *parent) : QWidget(parent)
 {
-    m_desktop = new QWidget(this);
-    m_desktop->setMinimumSize(QSize(500,500));
+   // m_desktop = new QWidget(this);
+   // m_desktop->setMinimumSize(QSize(500,500));
 
-QPushButton *s = new QPushButton("Button",m_desktop);
+
 
 
 
@@ -13,7 +14,7 @@ QPushButton *s = new QPushButton("Button",m_desktop);
     QSizePolicy desktopPolicy;
     desktopPolicy.setVerticalPolicy(QSizePolicy::Preferred);
     desktopPolicy.setHorizontalPolicy(QSizePolicy::Preferred);
-    m_desktop->setSizePolicy(desktopPolicy);
+   // m_desktop->setSizePolicy(desktopPolicy);
 
     // Индикатор соединения
     QLabel *m_label1 = new QLabel("Console");
@@ -21,7 +22,7 @@ QPushButton *s = new QPushButton("Button",m_desktop);
 
 
     m_debugConsole = new DebugConsole(this);
-    connect(m_debugConsole, &DebugConsole::enterPressed, this, &Tab::doCommand);
+    connect(m_debugConsole, &DebugConsole::sendCMD, this, &Tab::doCommand);
 
 
     // Консоль
@@ -47,7 +48,7 @@ QPushButton *s = new QPushButton("Button",m_desktop);
     m_VLayoutConsole->addWidget(m_console,Qt::AlignRight);
     m_VLayoutConsole->addLayout(m_pbLayout,Qt::AlignRight);
     m_VLayoutConsole->addWidget(m_connectSettings);
-    m_HLayout->addWidget(m_desktop);
+   // m_HLayout->addWidget(m_desktop);
     m_HLayout->addLayout(m_VLayoutConsole);
     m_VLayout->addLayout(m_HLayout);
     m_VLayout->addWidget(m_debugConsole);
@@ -86,21 +87,16 @@ void Tab::doCommand(QString command)
     QStringList words = command.split(' ', QString::SkipEmptyParts);
 
 
-    if(words[0] == "r") {
-        //r(words[1]);
-       QByteArray g;
-       g.append(0x31);
-       g.append(0x1);
-       g.append(0x2);
-       //writeData(g);
-       const char t[3] ={0x32,0x1,0x4};
-          m_serial->write(t);
+    if(words[0] == "do") {
+         m_debugConsole->errorMessage(words[1]);
+         doIt(words[1]);
+         //doIt("D:/Projects/GitHub/Terminal/doFile.txt");
+        // m_debugConsole->output("done");
 
     }
-    else if(words[0] == "w") {
-        const char t[3] ={0x31,0x3,0x2};
-           m_serial->write(t);
-
+    else if(words[0] == "r") {
+ m_debugConsole->errorMessage("!!!!!!!!!!");
+ //m_debugConsole->output("done");
     }
     else if(words[0] == "d") {
         const char t[3] ={0x31,0x1,0x7};
@@ -113,7 +109,7 @@ void Tab::doCommand(QString command)
 
     }
     else {
-    m_debugConsole->errorMessage("Сommand not found");
+        m_debugConsole->output("Сommand not found",QColor(Qt::red));
     }
 
 
@@ -190,6 +186,26 @@ void Tab::writeData(QString data)
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QByteArray encodedData = codec->fromUnicode(data);
     m_serial->write(encodedData);
+}
+
+void Tab::doIt(QString pathFile)
+{
+    QStringList strList;
+
+    QFile file(pathFile);
+    if(file.exists())
+    {
+        if(file.open(QIODevice::ReadOnly))
+        {
+            while(!file.atEnd())
+                doCommand(file.readLine());
+        } else {
+            m_debugConsole->errorMessage("The file is not open!");
+        }
+    } else {
+        m_debugConsole->errorMessage("The file does not exist!");
+    }
+    file.close();
 }
 
 void Tab::r(QString addressesWord)

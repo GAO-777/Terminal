@@ -57,6 +57,7 @@ public slots:
     void writeData(QString data);   // запись в порт
 
     // === Список команд для сценария === //
+    void doIt(QString pathFile);
     void r(QString addressesWord);                // читать регистр
     void w(QString address, QString data);  // запись в регистр
     //void rcl();
