@@ -6,6 +6,7 @@
 Console::Console(QWidget *parent) :
     QPlainTextEdit(parent)
 {
+    setMinimumHeight(300);
     document()->setMaximumBlockCount(100);
     QPalette p = palette();
     p.setColor(QPalette::Base, Qt::black);

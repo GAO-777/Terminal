@@ -1,6 +1,9 @@
 #include "tab.h"
 #include<QThread>
 #include<QFile>
+#include<QDir>
+#include<QFileInfo>
+
 Tab::Tab(QWidget *parent) : QWidget(parent)
 {
    // m_desktop = new QWidget(this);
@@ -61,23 +64,14 @@ Tab::Tab(QWidget *parent) : QWidget(parent)
 
 void Tab::connect_action()
 {
-    // === SERIAL === //
-    m_serial = new QSerialPort();
-    connect(m_serial, &QSerialPort::readyRead, this, &Tab::readData);
-    m_serial->setPortName(serialParameters.name);
-    m_serial->setBaudRate(serialParameters.baudRate);
-    m_serial->setDataBits(serialParameters.dataBits);
-    m_serial->setParity(serialParameters.parity);
-    m_serial->setStopBits(serialParameters.stopBits);
-    m_serial->setFlowControl(serialParameters.flowControl);
+    switch (typeContact) {
+        case SettingsDialog::Serial:
+                serialInit();
+        break;
 
-    if (m_serial->open(QIODevice::ReadWrite)){
-        setEnableConsole(true);
-        m_debugConsole->goodMessage("СOM PORT successfully opened");
-    }
-    else {
-        setEnableConsole(false);
-        m_debugConsole->errorMessage("СOM PORT cannot be opened");
+        case SettingsDialog::SSH:
+                sshInit();
+        break;
     }
 }
 
@@ -87,29 +81,22 @@ void Tab::doCommand(QString command)
     QStringList words = command.split(' ', QString::SkipEmptyParts);
 
 
-    if(words[0] == "do") {
-         m_debugConsole->errorMessage(words[1]);
-         doIt(words[1]);
-         //doIt("D:/Projects/GitHub/Terminal/doFile.txt");
-        // m_debugConsole->output("done");
-
+    if(words[0] == "do"){
+        if(words.size() == 1)
+            m_debugConsole->output("Specify the file to execute!","e");
+        else doIt(words[1]);
     }
     else if(words[0] == "r") {
- m_debugConsole->errorMessage("!!!!!!!!!!");
- //m_debugConsole->output("done");
+
+
     }
     else if(words[0] == "d") {
-        const char t[3] ={0x31,0x1,0x7};
-           m_serial->write(&t[0]);
-           QThread::sleep(2);
-           m_serial->write(&t[1]);
-           QThread::sleep(2);
-           m_serial->write(&t[2]);
+
 
 
     }
     else {
-        m_debugConsole->output("Сommand not found",QColor(Qt::red));
+        m_debugConsole->output("Сommand not found","e");
     }
 
 
@@ -141,7 +128,7 @@ void Tab::disconnect_action()
 {
     m_serial->close();
     setEnableConsole(false);
-    m_debugConsole->goodMessage("СOM PORT is closed");
+    m_debugConsole->output("СOM PORT is closed","m");
 }
 
 void Tab::settings_action()
@@ -162,6 +149,38 @@ void Tab::settings_action()
     }
 
     m_ContactSettings->show();
+}
+
+void Tab::serialInit()
+{
+    // === SERIAL === //
+    m_serial = new QSerialPort();
+    connect(m_serial, &QSerialPort::readyRead, this, &Tab::readData);
+    m_serial->setPortName(serialParameters.name);
+    m_serial->setBaudRate(serialParameters.baudRate);
+    m_serial->setDataBits(serialParameters.dataBits);
+    m_serial->setParity(serialParameters.parity);
+    m_serial->setStopBits(serialParameters.stopBits);
+    m_serial->setFlowControl(serialParameters.flowControl);
+
+    if (m_serial->open(QIODevice::ReadWrite)){
+        setEnableConsole(true);
+        m_debugConsole->output("СOM PORT successfully opened","m");
+    }
+    else {
+        setEnableConsole(false);
+        m_debugConsole->output("СOM PORT cannot be opened","e");
+    }
+}
+
+void Tab::sshInit()
+{
+    if(sshParameters.isTCP){
+        m_socket = new QAbstractSocket(QAbstractSocket::TcpSocket,this);
+    } else {
+        m_socket = new QAbstractSocket(QAbstractSocket::UdpSocket,this);
+    }
+
 }
 
 void Tab::receiveSerialParameters(SettingsDialog::SerialParameters paremeters)
@@ -191,20 +210,36 @@ void Tab::writeData(QString data)
 void Tab::doIt(QString pathFile)
 {
     QStringList strList;
+    QFile file(pathFile,this);
+    QFileInfo fileInfo(file);
 
-    QFile file(pathFile);
-    if(file.exists())
-    {
-        if(file.open(QIODevice::ReadOnly))
+    if(fileInfo.suffix() == "do"){
+
+        if(file.exists(pathFile))
         {
-            while(!file.atEnd())
-                doCommand(file.readLine());
-        } else {
-            m_debugConsole->errorMessage("The file is not open!");
+            if(file.open(QIODevice::ReadOnly))
+            {
+                while(!file.atEnd())
+                    doCommand(file.readLine());
+                m_debugConsole->output("Done","m");
+            } else {
+                m_debugConsole->output("The file is not open!","e");
+            }
+        } else if(file.exists(QDir::currentPath()+ "/" + pathFile)){
+
+            if(file.open(QIODevice::ReadOnly))
+            {
+                while(!file.atEnd())
+                    doCommand(file.readLine());
+                m_debugConsole->output("Done","m");
+            } else {
+                m_debugConsole->output("The file is not open!","e");
+            }
         }
-    } else {
-        m_debugConsole->errorMessage("The file does not exist!");
-    }
+        else{
+            m_debugConsole->output("The file does not exist!","e");
+        }
+    }else m_debugConsole->output("Invalid file extension!","e");
     file.close();
 }
 

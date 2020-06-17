@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QGridLayout>
+#include <QHBoxLayout>
+#include <QRadioButton>
 #include <QSerialPort>
 #include <QSerialPortInfo>
 namespace Ui {
@@ -27,7 +29,11 @@ public:
         QSerialPort::FlowControl flowControl;
     };
     struct SSHParameters
-    {};
+    {
+        QString ip;
+        QString port;
+        bool isTCP;
+    };
 
     explicit SettingsDialog(QWidget *parent = nullptr);
     ~SettingsDialog();
@@ -38,13 +44,20 @@ public:
     void showParametersSerilParameters();
     void showParametersSSHParameters();
     void changeSerilParametersTo();
+    void changeSSHParametersTo();
+
+// ==== Serial settings ==== //
     QComboBox *cb_name;
     QComboBox *cb_baudRate;
     QComboBox *cb_dataBits;
     QComboBox *cb_parity;
     QComboBox *cb_stopBits;
     QComboBox *cb_flowControl;
-
+// ==== SSH settings ==== //
+    QLineEdit *le_ip;
+    QLineEdit *le_port;
+    QRadioButton *rb_tcp;
+    QRadioButton *rb_udp;
 
     void updateSettings();
     void apply();

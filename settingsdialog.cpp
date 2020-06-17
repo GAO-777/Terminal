@@ -1,6 +1,6 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
-
+#include<QLineEdit>
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDialog)
@@ -110,16 +110,26 @@ void SettingsDialog::fillSSHParameters()
 {
     /*Создает виджет для SSH*/
     QGridLayout *parametersLayout = new QGridLayout(this);
-    QLabel *lb_name = new QLabel("Port:");
-    parametersLayout->addWidget(lb_name,0,0);
+    QLabel *lb_ip = new QLabel("IP address:");
+    QLabel *lb_port = new QLabel("Port:");
+    le_ip = new QLineEdit(this);
+    le_port = new QLineEdit(this);
+    rb_tcp = new QRadioButton("TCP",this);
+    rb_udp = new QRadioButton("UDP",this);
+    parametersLayout->addWidget(lb_ip,0,0,Qt::AlignLeft);
+    parametersLayout->addWidget(le_ip,0,1,Qt::AlignCenter);
+    parametersLayout->addWidget(lb_port,1,0,Qt::AlignLeft);
+    parametersLayout->addWidget(le_port,1,1,Qt::AlignCenter);
+    parametersLayout->addWidget(rb_tcp,2,0,Qt::AlignCenter);
+    parametersLayout->addWidget(rb_udp,2,1,Qt::AlignCenter);
     w_sshParameters->setLayout(parametersLayout);
 }
 
 void SettingsDialog::showParametersSerilParameters()
 {
-    ui->Serial_RB->setChecked(true);
-    w_serialParameters->setVisible(true);
     w_sshParameters->setVisible(false);
+    w_serialParameters->setVisible(true);
+    ui->Serial_RB->setChecked(true);
     typeContact = Serial;
     if(serialParameters.name != "")
         changeSerilParametersTo();
@@ -127,10 +137,13 @@ void SettingsDialog::showParametersSerilParameters()
 }
 void SettingsDialog::showParametersSSHParameters()
 {
-    typeContact = SSH;
-    ui->SSH_RB->setChecked(true);
     w_serialParameters->setVisible(false);
     w_sshParameters->setVisible(true);
+    typeContact = SSH;
+    ui->SSH_RB->setChecked(true);
+    if(sshParameters.ip != "")
+        changeSSHParametersTo();
+
 }
 void SettingsDialog::changeSerilParametersTo()
 {
@@ -141,11 +154,16 @@ void SettingsDialog::changeSerilParametersTo()
     cb_stopBits->setCurrentIndex(cb_stopBits->findData(serialParameters.stopBits));
     cb_flowControl->setCurrentIndex(cb_flowControl->findData(serialParameters.flowControl));
 }
+
+void SettingsDialog::changeSSHParametersTo()
+{
+    le_ip->setText(sshParameters.ip);
+    le_port->setText(sshParameters.port);
+}
 void SettingsDialog::updateSettings()
 {
 
-    if(ui->Serial_RB->isChecked())
-    {
+    if(ui->Serial_RB->isChecked()){
         serialParameters.name = cb_name->currentText();
 
         serialParameters.baudRate = static_cast<QSerialPort::BaudRate>(
@@ -159,6 +177,12 @@ void SettingsDialog::updateSettings()
         serialParameters.flowControl = static_cast<QSerialPort::FlowControl>(
                             cb_flowControl->itemData(cb_flowControl->currentIndex()).toInt());
     }
+    else if(ui->SSH_RB->isChecked()){
+        sshParameters.ip = le_ip->text();
+        sshParameters.port = le_port->text();
+        sshParameters.isTCP = rb_tcp->isChecked();
+    }
+
 }
 
 

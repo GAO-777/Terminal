@@ -9,7 +9,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     QSizePolicy policy;
     policy.setHorizontalPolicy(QSizePolicy::Preferred);
 
-    setMaximumHeight(50);
+    setMinimumHeight(100);
     setSizePolicy(policy);
 
 
@@ -25,55 +25,17 @@ DebugConsole::DebugConsole(QWidget *parent) :
 
 void DebugConsole::onEnter()
 {
+    moveCursor(QTextCursor::End);
     if(textCursor().positionInBlock() == prompt.length())
     {
     insertPrompt();
     return;
     }
     QString cmd = textCursor().block().text().mid(prompt.length());
+
     isLocked = true;
     historyAdd(cmd);
     emit sendCMD(cmd);
-}
-
-void DebugConsole::errorMessage(QString str)
-{
-    QTextCharFormat format = currentCharFormat();
-    QTextCharFormat oldformat = currentCharFormat();
-    format.setForeground(QBrush(Qt::red));
-    QFont font;
-    font.setBold(true);
-    format.setFont(font);
-    setCurrentCharFormat(format);
-    insertPlainText(">> ERROR : " + str + "\n");
-    setCurrentCharFormat(oldformat);
-}
-
-void DebugConsole::warningMessage(QString str)
-{
-    QTextCharFormat format = currentCharFormat();
-    QTextCharFormat oldformat = currentCharFormat();
-    format.setForeground(QBrush(QColor(236,124,38)));
-    QFont font;
-    font.setBold(true);
-    format.setFont(font);
-    setCurrentCharFormat(format);
-    insertPlainText(">> WARNING : " + str + "\n");
-    setCurrentCharFormat(oldformat);
-}
-
-void DebugConsole::goodMessage(QString str)
-{
-    QTextCharFormat format = currentCharFormat();
-    QTextCharFormat oldformat = currentCharFormat();
-    format.setForeground(QBrush(QColor(0,156,39)));
-    QFont font;
-    font.setBold(true);
-    format.setFont(font);
-    setCurrentCharFormat(format);
-    appendPlainText(">> " + str + "\n");
-    setCurrentCharFormat(oldformat);
-    insertPlainText("<< ");
 }
 
 
@@ -96,6 +58,20 @@ void DebugConsole::keyPressEvent(QKeyEvent *e)
 
     case Qt::Key_Down :
              historyForward();
+         break;
+
+    case Qt::Key_Left :
+        if(textCursor().positionInBlock() != prompt.length())
+             moveCursor(QTextCursor::PreviousCharacter);
+         break;
+
+    case Qt::Key_End :
+             moveCursor(QTextCursor::EndOfBlock);
+         break;
+
+    case Qt::Key_Home :
+             moveCursor(QTextCursor::StartOfBlock);
+             moveCursor(QTextCursor::NextWord);
          break;
 
     default:
@@ -122,11 +98,29 @@ void DebugConsole::contextMenuEvent(QContextMenuEvent *e)
 {
     Q_UNUSED(e)
 }
-void DebugConsole::output(QString s, QColor c)
+void DebugConsole::output(QString s, QString type)
 {
     textCursor().insertBlock();
     QTextCharFormat format;
-    format.setForeground(c);
+
+    if(type == "e"){
+        format.setForeground(Qt::red);
+        QFont font;
+        font.setBold(true);
+        format.setFont(font);
+        s = "ERROR : " + s;
+    } else if(type == "w"){
+        format.setForeground(QBrush(QColor(236,124,38)));
+        QFont font;
+        font.setBold(true);
+        format.setFont(font);
+        s = "WARNING : " + s;
+    } else if(type == "m"){
+        format.setForeground(Qt::blue);
+        QFont font;
+        font.setBold(false);
+        format.setFont(font);
+    }
     textCursor().setBlockCharFormat(format);
     textCursor().insertText(s);
     insertPrompt();
@@ -136,7 +130,7 @@ void DebugConsole::output(QString s, QColor c)
 void DebugConsole::insertPrompt(bool insertNewBlock)
 {
     if(insertNewBlock)
-    textCursor().insertBlock();
+        textCursor().insertBlock();
     QTextCharFormat format;
     format.setForeground(Qt::black);
     textCursor().setBlockCharFormat(format);

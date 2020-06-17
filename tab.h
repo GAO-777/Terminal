@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QSerialPort>
 #include <QLineEdit>
+#include <QAbstractSocket>
 #include "console.h"
 #include "settingsdialog.h"
 #include "debugconsole.h"
@@ -38,6 +39,7 @@ public:
 
     // === Указатели на подлючения === //
     QSerialPort *m_serial;
+    QAbstractSocket *m_socket;
 
    // === Метод ... === //
 public slots:
@@ -48,6 +50,8 @@ public slots:
     void settings_action();         // вызов настроек подлючения
 
     // ==== Общие === //
+    void serialInit();  // инициализация последовательного порта
+    void sshInit();  // инициализация ssh соединения
     void setEnableConsole(bool t);  // закрыть(false)/открыть(true) кнопки и консоль
     void receiveSerialParameters(SettingsDialog::SerialParameters paremeters);  // принять праметры подлючения по Serial
     void receiveSSHParameters(SettingsDialog::SSHParameters paremeters);        // принять праметры подлючения по SSH
