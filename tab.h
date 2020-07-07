@@ -41,6 +41,9 @@ public:
     QSerialPort *m_serial;
     QAbstractSocket *m_socket;
 
+    // ==== Подлючение файлов === //
+    QString pathCL;
+
    // === Метод ... === //
 public slots:
     // ==== Управление (Кнопки) === //
@@ -59,12 +62,16 @@ public slots:
     // ==== Взаимодействие с портом ==== //
     void readData();                // прочитать данные из порта
     void writeData(QString data);   // запись в порт
+    bool sendInt(QString data, int size);
+    bool sendPackage(QString data);
 
     // === Список команд для сценария === //
-    void doIt(QString pathFile);
-    void r(QString addressesWord);                // читать регистр
-    void w(QString address, QString data);  // запись в регистр
-    //void rcl();
+    int doIt(QString pathFile);
+    QString replaceToHEX(QString str);
+
+
+    // ==== Работа с файлами === //
+    QString fileCheck(QString pathFile, QString extension); // проверка файла на пригодность
 
 };
 

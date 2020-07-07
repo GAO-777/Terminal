@@ -22,6 +22,33 @@ DebugConsole::DebugConsole(QWidget *parent) :
     isLocked = false;
 }
 
+void DebugConsole::print(QString s, QString type)
+{
+    textCursor().insertBlock();
+    QTextCharFormat format;
+
+    if(type == "e"){
+        format.setForeground(Qt::red);
+        QFont font;
+        font.setBold(true);
+        format.setFont(font);
+        s = "ERROR : " + s;
+    } else if(type == "w"){
+        format.setForeground(QBrush(QColor(236,124,38)));
+        QFont font;
+        font.setBold(true);
+        format.setFont(font);
+        s = "WARNING : " + s;
+    } else if(type == "m"){
+        format.setForeground(Qt::blue);
+        QFont font;
+        font.setBold(false);
+        format.setFont(font);
+    }
+    textCursor().setBlockCharFormat(format);
+    textCursor().insertText(s);
+}
+
 
 void DebugConsole::onEnter()
 {
@@ -38,6 +65,11 @@ void DebugConsole::onEnter()
     emit sendCMD(cmd);
 }
 
+void DebugConsole::lock(bool lock)
+{
+    isLocked = lock;
+    insertPrompt();
+}
 
 void DebugConsole::keyPressEvent(QKeyEvent *e)
 {
@@ -102,6 +134,7 @@ void DebugConsole::output(QString s, QString type)
 {
     textCursor().insertBlock();
     QTextCharFormat format;
+
 
     if(type == "e"){
         format.setForeground(Qt::red);

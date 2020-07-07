@@ -1,6 +1,5 @@
 #include "console.h"
-
-
+#include <QMenu>
 #include <QScrollBar>
 
 Console::Console(QWidget *parent) :
@@ -13,15 +12,44 @@ Console::Console(QWidget *parent) :
     p.setColor(QPalette::Text, Qt::green);
     setPalette(p);
     dontPrint_Flag = true;
+
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this,&Console::customContextMenuRequested,this,&Console::tableContextMenu);
 }
 
 void Console::putData(const QByteArray data)
 {
-    if(dontPrint_Flag)
-        insertPlainText(data);
+    if(dontPrint_Flag){
+        if(HEX_mode) insertPlainText(data.toHex());
+        else insertPlainText(data);
+    }
     else dontPrint_Flag = true;
     QScrollBar *bar = verticalScrollBar();
     bar->setValue(bar->maximum());
+}
+
+void Console::changePrintMode()
+{   HEX_mode = !HEX_mode;   }
+
+void Console::tableContextMenu()
+{
+    QMenu * menu = new QMenu(this);
+
+    //=== Выбор режима печати консоли ===//
+    QAction* printMode = new QAction(this);
+    printMode->setCheckable(true);
+    printMode->setChecked(HEX_mode);
+    if(HEX_mode) printMode->setText("Режим печати: HEX -> UTF-8");
+    else printMode->setText("Режим печати: UTF-8 -> HEX");
+    connect(printMode,&QAction::triggered,this,&Console::changePrintMode);
+
+
+
+    //=== Добавляю в меню ===//
+    menu->addSeparator();
+    menu->addAction(printMode);
+    //=== Показываю меню ===//
+    menu->popup(QCursor::pos());
 }
 
 void Console::keyPressEvent(QKeyEvent *e)
@@ -75,7 +103,7 @@ void Console::mouseDoubleClickEvent(QMouseEvent *e)
     setFocus();
 }
 
-void Console::contextMenuEvent(QContextMenuEvent *e)
+/*void Console::contextMenuEvent(QContextMenuEvent *e)
 {
     Q_UNUSED(e)
-}
+}*/

@@ -14,10 +14,13 @@ signals:
 
 public:
     explicit DebugConsole(QWidget *parent = nullptr);
+    void print(QString s, QString type);
     void output(QString, QString type);
     void scrollDown();
     void insertPrompt(bool insertNewBlock = true);
     void onEnter();
+    void lock(bool lock);
+
     QString prompt = "<< ";
     QString userText;
     QStringList CommandHistory;
